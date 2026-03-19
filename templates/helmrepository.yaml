@@ -1,0 +1,24 @@
+{{- range $helmrepos := .Values.helmRepositories | default list }}
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: {{ $helmrepos.name }}
+  namespace: {{ $helmrepos.namespace }}
+{{- if $helmrepos.annotations }}
+  annotations:
+{{ $helmrepos.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $helmrepos.labels }}
+{{ $helmrepos.labels | toYaml | indent 4 }}
+{{- end }}
+spec:
+  interval: {{ $helmrepos.interval | default "10m0s" }}
+  url: {{ $helmrepos.url }}
+{{- if $helmrepos.type }}
+  type: {{ $helmrepos.type }}
+{{- end }}
+{{- end }}
+ 

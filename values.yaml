@@ -1,0 +1,10 @@
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+helmRepositories: []
+
+namespaces: []
+
+helmReleases: []

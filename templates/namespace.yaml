@@ -1,0 +1,16 @@
+{{- range $ns := .Values.namespaces | default list }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $ns.name }}
+{{- if $ns.annotations }}
+  annotations:
+{{ $ns.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $ns.labels }}
+{{ $ns.labels | toYaml | indent 4 }}
+{{- end }}
+{{- end }}

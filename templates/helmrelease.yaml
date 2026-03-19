@@ -1,0 +1,31 @@
+{{- range $name, $hr := .Values.helmReleases | default list }}
+---
+apiVersion: {{ $hr.apiVersion | default "helm.toolkit.fluxcd.io/v2" }}
+kind: HelmRelease
+metadata:
+  name: {{ $name }}
+{{- if $hr.namespace }}
+  namespace: {{ $hr.namespace }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+spec:
+{{- with (required "HelmRelease spec is required" $hr.spec) }}
+{{- $filtered_spec := omit . "install" "upgrade" }}
+  install:
+{{- if .install }}
+{{ .install | toYaml | indent 4 }}
+{{- else }}
+    remediation:
+      retries: 3
+{{- end }}
+  upgrade:
+{{- if .upgrade }}
+{{ .upgrade | toYaml | indent 4 }}
+{{- else }}
+    remediation:
+      retries: 3
+{{- end }}
+{{ $filtered_spec | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,40 @@
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+helmRepositories:
+  - name: metallb
+    namespace: bootstrap
+    type: oci
+    interval: 5m
+    url: oci://registry-1.docker.io/bitnamicharts
+
+namespaces:
+  - name: unclebob
+    annotations:
+      one: here
+      two: three
+    labels:
+      labelOne: two
+      labelTwo: three
+
+helmReleases:
+  chart:
+    namespace: chart-ns
+    spec:
+      interval: 1m
+      install:
+        remediation:
+          retries: 3
+
+secrets:
+  - name: test
+    namespace: kube-system
+    type: kubernetes/tls
+    values:
+      xzy: "no"
+  - name: bob
+    namespace: kube-system
+    values:
+      test: "yes"

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: flux-loop
+description: A simple helm chart for install multiple fluxcd objects
+
+type: application
+
+version: 1.0.0
+appVersion: "1.0.0"
