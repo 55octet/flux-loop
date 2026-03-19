@@ -1,0 +1,62 @@
+name: Release Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint chart
+        run: helm lint .
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: lint
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username ${{ github.actor }} \
+            --password-stdin
+
+      - name: Get chart version
+        id: chart
+        run: |
+          VERSION=$(helm show chart . | grep '^version:' | awk '{print $2}')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Package chart
+        run: helm package .
+
+      - name: Push chart to GHCR
+        run: |
+          helm push flux-loop-${{ steps.chart.outputs.version }}.tgz \
+            oci://ghcr.io/${{ github.repository_owner }}
