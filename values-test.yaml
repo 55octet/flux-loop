@@ -11,8 +11,8 @@ helmRepositories:
 
 ociRepositories:
   - name: cloudnative-pg
+    namespace: cnpg
     spec:
-      namespace: cnpg
       interval: 5m
       url: oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
       ref:
