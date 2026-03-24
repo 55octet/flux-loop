@@ -1,0 +1,20 @@
+{{- range $ocirepos := .Values.ociRepositories | default list }}
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: {{ $ocirepos.name }}
+  namespace: {{ $ocirepos.namespace }}
+{{- if $ocirepos.annotations }}
+  annotations:
+{{ $ocirepos.annotations | toYaml | indent 4 }}
+{{- end }} 
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }} 
+{{- if $ocirepos.labels }}
+{{ $ocirepos.labels | toYaml | indent 4 }}
+{{- end }}
+spec:
+{{- with (required "OCIRepository spec is required" $ocirepos.spec) }}
+{{- end}}
+{{- end}}

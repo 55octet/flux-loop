@@ -5,6 +5,8 @@ fullnameOverride: ""
 
 helmRepositories: []
 
+ociRepositories: []
+
 namespaces: []
 
 helmReleases: []

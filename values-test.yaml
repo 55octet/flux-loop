@@ -6,9 +6,17 @@ fullnameOverride: ""
 helmRepositories:
   - name: metallb
     namespace: bootstrap
-    type: oci
     interval: 5m
-    url: oci://registry-1.docker.io/bitnamicharts
+    url: https://metallb.github.io/metallb
+
+ociRepositories:
+  - name: cloudnative-pg
+    namespace: cnpg
+    spec:
+      interval: 5m
+      url: oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
+      ref:
+        tag: 0.27.1
 
 namespaces:
   - name: unclebob
