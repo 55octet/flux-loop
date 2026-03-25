@@ -16,5 +16,6 @@ metadata:
 {{- end }}
 spec:
 {{- with (required "OCIRepository spec is required" $ocirepos.spec) }}
+{{ . | toYaml | indent 2 }}
 {{- end}}
 {{- end}}
