@@ -1,0 +1,20 @@
+{{- range $name, $bundle := .Values.bundles | default dict }}
+---
+apiVersion: {{ $bundle.apiVersion | default "trust.cert-manager.io/v1alpha1" }}
+kind: Bundle
+metadata:
+  name: {{ $name }}
+{{- if $bundle.annotations }}
+  annotations:
+{{ $bundle.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $bundle.labels }}
+{{ $bundle.labels | toYaml | indent 4 }}
+{{- end }}
+spec:
+{{- with (required "Bundle spec is required" $bundle.spec) }}
+{{ . | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,25 @@
+{{- range $cm := .Values.configMaps | default list }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $cm.name }}
+  namespace: {{ $cm.namespace }}
+{{- if $cm.annotations }}
+  annotations:
+{{ $cm.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $cm.labels }}
+{{ $cm.labels | toYaml | indent 4 }}
+{{- end }}
+{{- $data := dict }}
+{{- range $key, $value := $cm.values | default dict }}
+{{- $_ := set $data $key (toString $value) }}
+{{- end }}
+data:
+{{- if $data }}
+{{ $data | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

@@ -10,3 +10,7 @@ ociRepositories: []
 namespaces: []
 
 helmReleases: []
+
+bundles: {}
+
+configMaps: []

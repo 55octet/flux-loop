@@ -36,6 +36,39 @@ helmReleases:
         remediation:
           retries: 3
 
+bundles:
+  example-bundle:
+    annotations:
+      owner: platform-team
+    labels:
+      env: test
+    spec:
+      sources:
+        - useDefaultCAs: true
+        - secret:
+            name: my-root-ca
+            key: ca.crt
+      target:
+        configMap:
+          key: trust-bundle.pem
+        namespaceSelector:
+          matchLabels:
+            trust: enabled
+
+configMaps:
+  - name: app-config
+    namespace: kube-system
+    annotations:
+      owner: platform-team
+    labels:
+      env: test
+    values:
+      LOG_LEVEL: debug
+      replicas: 3
+      config.yaml: |
+        server:
+          port: 8080
+
 secrets:
   - name: test
     namespace: kube-system

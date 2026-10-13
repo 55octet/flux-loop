@@ -1,6 +1,6 @@
 # flux-loop
 
-A Helm chart for declaratively managing multiple Flux CD objects — HelmRepositories, HelmReleases, Namespaces, and Secrets — from a single values file.
+A Helm chart for declaratively managing multiple Flux CD objects — HelmRepositories, HelmReleases, Namespaces, Secrets, ConfigMaps, and trust-manager Bundles — from a single values file.
 
 ## Overview
 
@@ -11,12 +11,15 @@ A Helm chart for declaratively managing multiple Flux CD objects — HelmReposit
 - `helm.toolkit.fluxcd.io/v2` — `HelmRelease`
 - `v1` — `Namespace`
 - `v1` — `Secret`
+- `v1` — `ConfigMap`
+- `trust.cert-manager.io/v1alpha1` — `Bundle` ([trust-manager](https://cert-manager.io/docs/trust/trust-manager/))
 
 ## Prerequisites
 
 - Kubernetes cluster
 - [Flux CD](https://fluxcd.io/flux/installation/) installed in the cluster
 - Helm 3.x
+- [trust-manager](https://cert-manager.io/docs/trust/trust-manager/installation/) installed in the cluster (only if using `bundles`)
 
 ## Installation
 
@@ -45,6 +48,8 @@ helm install flux-loop ./flux-loop -f my-values.yaml
 | `namespaces` | list | `[]` | List of Namespace objects to create |
 | `helmReleases` | map | `{}` | Map of HelmRelease objects to create (key = release name) |
 | `secrets` | list | `[]` | List of Secret objects to create |
+| `configMaps` | list | `[]` | List of ConfigMap objects to create |
+| `bundles` | map | `{}` | Map of trust-manager Bundle objects to create (key = bundle name) |
 
 ### `helmRepositories[]`
 
@@ -86,6 +91,27 @@ helm install flux-loop ./flux-loop -f my-values.yaml
 | `namespace` | string | yes | Namespace to create the Secret in |
 | `values` | map | no | Key/value pairs. Values are base64-encoded automatically |
 | `type` | string | no | Secret type. Defaults to `Opaque` |
+| `annotations` | map | no | Additional annotations |
+| `labels` | map | no | Additional labels |
+
+### `configMaps[]`
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `name` | string | yes | Name of the ConfigMap |
+| `namespace` | string | yes | Namespace to create the ConfigMap in |
+| `values` | map | no | Key/value pairs. Values are converted to strings; multi-line values render as `\|` blocks |
+| `annotations` | map | no | Additional annotations |
+| `labels` | map | no | Additional labels |
+
+### `bundles`
+
+`bundles` is a **map** where each key is the Bundle name. Bundles are cluster-scoped, so no namespace is set. Each entry supports:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `apiVersion` | string | no | Override the apiVersion. Defaults to `trust.cert-manager.io/v1alpha1` |
+| `spec` | map | yes | Full Bundle spec (`sources`, `target`), passed through directly |
 | `annotations` | map | no | Additional annotations |
 | `labels` | map | no | Additional labels |
 
@@ -132,6 +158,30 @@ secrets:
     type: kubernetes.io/dockerconfigjson
     values:
       .dockerconfigjson: '{"auths":{"ghcr.io":{"auth":"<base64-token>"}}}'
+
+configMaps:
+  - name: app-config
+    namespace: my-app
+    values:
+      LOG_LEVEL: info
+      config.yaml: |
+        server:
+          port: 8080
+
+bundles:
+  my-org-ca:
+    spec:
+      sources:
+        - useDefaultCAs: true
+        - secret:
+            name: my-root-ca
+            key: ca.crt
+      target:
+        configMap:
+          key: trust-bundle.pem
+        namespaceSelector:
+          matchLabels:
+            trust: enabled
 ```
 
 ## Publishing
