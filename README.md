@@ -1,6 +1,6 @@
 # flux-loop
 
-A Helm chart for declaratively managing multiple Flux CD objects — HelmRepositories, HelmReleases, Namespaces, Secrets, ConfigMaps, and trust-manager Bundles — from a single values file.
+A Helm chart for declaratively managing multiple Flux CD objects — HelmRepositories, HelmReleases, Namespaces, Secrets, ConfigMaps, trust-manager Bundles, and cert-manager Certificates — from a single values file.
 
 ## Overview
 
@@ -13,6 +13,7 @@ A Helm chart for declaratively managing multiple Flux CD objects — HelmReposit
 - `v1` — `Secret`
 - `v1` — `ConfigMap`
 - `trust.cert-manager.io/v1alpha1` — `Bundle` ([trust-manager](https://cert-manager.io/docs/trust/trust-manager/))
+- `cert-manager.io/v1` — `Certificate` ([cert-manager](https://cert-manager.io/docs/usage/certificate/))
 
 ## Prerequisites
 
@@ -20,13 +21,14 @@ A Helm chart for declaratively managing multiple Flux CD objects — HelmReposit
 - [Flux CD](https://fluxcd.io/flux/installation/) installed in the cluster
 - Helm 3.x
 - [trust-manager](https://cert-manager.io/docs/trust/trust-manager/installation/) installed in the cluster (only if using `bundles`)
+- [cert-manager](https://cert-manager.io/docs/installation/) installed in the cluster (only if using `certificates`)
 
 ## Installation
 
 ### From GHCR (OCI)
 
 ```sh
-helm install flux-loop oci://ghcr.io/55octet/flux-loop --version 1.0.0 -f my-values.yaml
+helm install flux-loop oci://ghcr.io/55octet/flux-loop --version 1.3.0 -f my-values.yaml
 ```
 
 ### From source
@@ -50,6 +52,7 @@ helm install flux-loop ./flux-loop -f my-values.yaml
 | `secrets` | list | `[]` | List of Secret objects to create |
 | `configMaps` | list | `[]` | List of ConfigMap objects to create |
 | `bundles` | map | `{}` | Map of trust-manager Bundle objects to create (key = bundle name) |
+| `certificates` | map | `{}` | Map of cert-manager Certificate objects to create (key = certificate name) |
 
 ### `helmRepositories[]`
 
@@ -112,6 +115,18 @@ helm install flux-loop ./flux-loop -f my-values.yaml
 |-----|------|----------|-------------|
 | `apiVersion` | string | no | Override the apiVersion. Defaults to `trust.cert-manager.io/v1alpha1` |
 | `spec` | map | yes | Full Bundle spec (`sources`, `target`), passed through directly |
+| `annotations` | map | no | Additional annotations |
+| `labels` | map | no | Additional labels |
+
+### `certificates`
+
+`certificates` is a **map** where each key is the Certificate name. Each entry supports:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `namespace` | string | yes | Namespace to create the Certificate in |
+| `apiVersion` | string | no | Override the apiVersion. Defaults to `cert-manager.io/v1` |
+| `spec` | map | yes | Full [Certificate spec](https://cert-manager.io/v1.1-docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec), passed through directly. cert-manager requires at least `secretName` and `issuerRef` |
 | `annotations` | map | no | Additional annotations |
 | `labels` | map | no | Additional labels |
 
@@ -182,6 +197,21 @@ bundles:
         namespaceSelector:
           matchLabels:
             trust: enabled
+
+certificates:
+  my-app-tls:
+    namespace: my-app
+    spec:
+      secretName: my-app-tls
+      commonName: app.example.com
+      dnsNames:
+        - app.example.com
+      duration: 2160h
+      renewBefore: 360h
+      issuerRef:
+        name: letsencrypt-prod
+        kind: ClusterIssuer
+        group: cert-manager.io
 ```
 
 ## Publishing

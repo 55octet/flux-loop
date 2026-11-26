@@ -9,8 +9,10 @@ ociRepositories: []
 
 namespaces: []
 
-helmReleases: []
+helmReleases: {}
 
 bundles: {}
 
 configMaps: []
+
+certificates: {}

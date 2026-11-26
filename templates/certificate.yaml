@@ -1,0 +1,21 @@
+{{- range $name, $cert := .Values.certificates | default dict }}
+---
+apiVersion: {{ $cert.apiVersion | default "cert-manager.io/v1" }}
+kind: Certificate
+metadata:
+  name: {{ $name }}
+  namespace: {{ required (printf "Certificate %s namespace is required" $name) $cert.namespace }}
+{{- if $cert.annotations }}
+  annotations:
+{{ $cert.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $cert.labels }}
+{{ $cert.labels | toYaml | indent 4 }}
+{{- end }}
+spec:
+{{- with (required "Certificate spec is required" $cert.spec) }}
+{{ . | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

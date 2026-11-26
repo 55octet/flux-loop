@@ -79,3 +79,26 @@ secrets:
     namespace: kube-system
     values:
       test: "yes"
+
+certificates:
+  example-com-tls:
+    namespace: kube-system
+    annotations:
+      owner: platform-team
+    labels:
+      env: test
+    spec:
+      secretName: example-com-tls
+      commonName: example.com
+      dnsNames:
+        - example.com
+        - www.example.com
+      duration: 2160h
+      renewBefore: 360h
+      privateKey:
+        algorithm: ECDSA
+        size: 256
+      issuerRef:
+        name: letsencrypt-prod
+        kind: ClusterIssuer
+        group: cert-manager.io
