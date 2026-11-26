@@ -1,0 +1,119 @@
+suite: HelmRelease
+templates:
+  - templates/helmrelease.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a HelmRelease with default remediation
+    set:
+      helmReleases:
+        metallb:
+          namespace: bootstrap
+          spec:
+            interval: 1m
+            chart:
+              spec:
+                chart: metallb
+                sourceRef:
+                  kind: HelmRepository
+                  name: metallb
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HelmRelease
+      - isAPIVersion:
+          of: helm.toolkit.fluxcd.io/v2
+      - equal:
+          path: metadata.name
+          value: metallb
+      - equal:
+          path: metadata.namespace
+          value: bootstrap
+      - equal:
+          path: spec.install
+          value:
+            remediation:
+              retries: 3
+      - equal:
+          path: spec.upgrade
+          value:
+            remediation:
+              retries: 3
+      - equal:
+          path: spec.interval
+          value: 1m
+      - equal:
+          path: spec.chart.spec.chart
+          value: metallb
+
+  - it: uses provided install and upgrade blocks
+    set:
+      helmReleases:
+        metallb:
+          spec:
+            interval: 1m
+            install:
+              remediation:
+                retries: 5
+            upgrade:
+              remediation:
+                retries: 7
+    asserts:
+      - equal:
+          path: spec.install.remediation.retries
+          value: 5
+      - equal:
+          path: spec.upgrade.remediation.retries
+          value: 7
+
+  - it: omits namespace when not set and honours apiVersion override
+    set:
+      helmReleases:
+        metallb:
+          apiVersion: helm.toolkit.fluxcd.io/v2beta2
+          spec:
+            interval: 1m
+    asserts:
+      - isAPIVersion:
+          of: helm.toolkit.fluxcd.io/v2beta2
+      - notExists:
+          path: metadata.namespace
+
+  - it: renders releases in key order
+    set:
+      helmReleases:
+        zeta:
+          spec:
+            interval: 1m
+        alpha:
+          spec:
+            interval: 1m
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: alpha
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: zeta
+        documentIndex: 1
+
+  - it: fails when spec is missing
+    set:
+      helmReleases:
+        broken:
+          namespace: bootstrap
+    asserts:
+      - failedTemplate:
+          errorPattern: HelmRelease spec is required

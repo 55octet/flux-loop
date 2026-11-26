@@ -1,0 +1,38 @@
+suite: values-test.yaml smoke test
+values:
+  - ../values-test.yaml
+release:
+  name: test
+tests:
+  - it: renders every resource type from values-test.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/helmrepository.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/ocirepository.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/namespace.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/helmrelease.yaml
+      - hasDocuments:
+          count: 2
+        template: templates/secret.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/bundle.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/certificate.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/issuer.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/clusterissuer.yaml

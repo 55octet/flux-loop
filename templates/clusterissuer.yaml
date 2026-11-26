@@ -1,0 +1,20 @@
+{{- range $name, $issuer := .Values.clusterIssuers | default dict }}
+---
+apiVersion: {{ $issuer.apiVersion | default "cert-manager.io/v1" }}
+kind: ClusterIssuer
+metadata:
+  name: {{ $name }}
+{{- if $issuer.annotations }}
+  annotations:
+{{ $issuer.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $issuer.labels }}
+{{ $issuer.labels | toYaml | indent 4 }}
+{{- end }}
+spec:
+{{- with (required "ClusterIssuer spec is required" $issuer.spec) }}
+{{ . | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

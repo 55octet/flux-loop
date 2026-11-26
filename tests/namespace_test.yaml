@@ -1,0 +1,59 @@
+suite: Namespace
+templates:
+  - templates/namespace.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a Namespace with chart labels
+    set:
+      namespaces:
+        - name: my-app
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Namespace
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: metadata.name
+          value: my-app
+      - notExists:
+          path: metadata.namespace
+      - notExists:
+          path: metadata.annotations
+      - equal:
+          path: metadata.labels
+          value:
+            helm.sh/chart: flux-loop-0.0.1
+            app.kubernetes.io/name: flux-loop
+            app.kubernetes.io/instance: test
+            app.kubernetes.io/version: 0.0.1
+            app.kubernetes.io/managed-by: Helm
+
+  - it: merges custom annotations and labels
+    set:
+      namespaces:
+        - name: my-app
+          annotations:
+            owner: platform-team
+          labels:
+            env: production
+    asserts:
+      - equal:
+          path: metadata.annotations.owner
+          value: platform-team
+      - equal:
+          path: metadata.labels.env
+          value: production
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: test

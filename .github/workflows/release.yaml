@@ -29,6 +29,12 @@ jobs:
       - name: Lint chart
         run: helm lint .
 
+      - name: Install helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.2.1
+
+      - name: Run unit tests
+        run: helm unittest .
+
   publish:
     name: Publish
     runs-on: ubuntu-latest

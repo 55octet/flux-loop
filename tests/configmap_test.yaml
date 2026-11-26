@@ -1,0 +1,79 @@
+suite: ConfigMap
+templates:
+  - templates/configmap.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders data and converts values to strings
+    set:
+      configMaps:
+        - name: app-config
+          namespace: my-app
+          values:
+            LOG_LEVEL: debug
+            replicas: 3
+            enabled: true
+            config.yaml: |
+              server:
+                port: 8080
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: metadata.name
+          value: app-config
+      - equal:
+          path: metadata.namespace
+          value: my-app
+      - equal:
+          path: data.LOG_LEVEL
+          value: debug
+      - equal:
+          path: data.replicas
+          value: "3"
+      - equal:
+          path: data.enabled
+          value: "true"
+      - equal:
+          path: data["config.yaml"]
+          value: |
+            server:
+              port: 8080
+
+  - it: renders an empty data block when no values are given
+    set:
+      configMaps:
+        - name: empty
+          namespace: my-app
+    asserts:
+      - isNullOrEmpty:
+          path: data
+
+  - it: merges custom annotations and labels
+    set:
+      configMaps:
+        - name: app-config
+          namespace: my-app
+          annotations:
+            owner: platform-team
+          labels:
+            env: test
+    asserts:
+      - equal:
+          path: metadata.annotations.owner
+          value: platform-team
+      - equal:
+          path: metadata.labels.env
+          value: test

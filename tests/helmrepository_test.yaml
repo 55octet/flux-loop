@@ -1,0 +1,89 @@
+suite: HelmRepository
+templates:
+  - templates/helmrepository.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a HelmRepository with defaults
+    set:
+      helmRepositories:
+        - name: metallb
+          namespace: bootstrap
+          url: https://metallb.github.io/metallb
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HelmRepository
+      - isAPIVersion:
+          of: source.toolkit.fluxcd.io/v1
+      - equal:
+          path: metadata.name
+          value: metallb
+      - equal:
+          path: metadata.namespace
+          value: bootstrap
+      - equal:
+          path: spec.interval
+          value: 10m0s
+      - equal:
+          path: spec.url
+          value: https://metallb.github.io/metallb
+      - notExists:
+          path: spec.type
+      - notExists:
+          path: metadata.annotations
+
+  - it: honours interval, type, annotations and labels
+    set:
+      helmRepositories:
+        - name: bitnami
+          namespace: bootstrap
+          type: oci
+          interval: 5m
+          url: oci://registry-1.docker.io/bitnamicharts
+          annotations:
+            owner: platform-team
+          labels:
+            env: test
+    asserts:
+      - equal:
+          path: spec.interval
+          value: 5m
+      - equal:
+          path: spec.type
+          value: oci
+      - equal:
+          path: metadata.annotations.owner
+          value: platform-team
+      - equal:
+          path: metadata.labels.env
+          value: test
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+
+  - it: renders one document per list entry
+    set:
+      helmRepositories:
+        - name: one
+          namespace: a
+          url: https://one.example.com
+        - name: two
+          namespace: b
+          url: https://two.example.com
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: two
+        documentIndex: 1

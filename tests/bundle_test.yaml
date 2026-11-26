@@ -1,0 +1,127 @@
+suite: Bundle
+templates:
+  - templates/bundle.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders the Bundle keyed by name with the spec passed through
+    set:
+      bundles:
+        example:
+          spec:
+            sources:
+              - useDefaultCAs: true
+            target:
+              configMap:
+                key: trust-bundle.pem
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Bundle
+      - isAPIVersion:
+          of: trust.cert-manager.io/v1alpha1
+      - equal:
+          path: metadata.name
+          value: example
+      - notExists:
+          path: metadata.namespace
+      - notExists:
+          path: metadata.annotations
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+      - equal:
+          path: spec
+          value:
+              sources:
+                - useDefaultCAs: true
+              target:
+                configMap:
+                  key: trust-bundle.pem
+
+  - it: merges custom annotations and labels
+    set:
+      bundles:
+        example:
+          annotations:
+            owner: platform-team
+          labels:
+            env: test
+          spec:
+            sources:
+              - useDefaultCAs: true
+            target:
+              configMap:
+                key: trust-bundle.pem
+    asserts:
+      - equal:
+          path: metadata.annotations.owner
+          value: platform-team
+      - equal:
+          path: metadata.labels.env
+          value: test
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: test
+
+  - it: honours an apiVersion override
+    set:
+      bundles:
+        example:
+          apiVersion: example.io/v9
+          spec:
+            sources:
+              - useDefaultCAs: true
+            target:
+              configMap:
+                key: trust-bundle.pem
+    asserts:
+      - isAPIVersion:
+          of: example.io/v9
+
+  - it: renders entries in key order
+    set:
+      bundles:
+        zeta:
+          spec:
+            sources:
+              - useDefaultCAs: true
+            target:
+              configMap:
+                key: trust-bundle.pem
+        alpha:
+          spec:
+            sources:
+              - useDefaultCAs: true
+            target:
+              configMap:
+                key: trust-bundle.pem
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: alpha
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: zeta
+        documentIndex: 1
+
+  - it: fails when spec is missing
+    set:
+      bundles:
+        broken:
+          labels: {}
+    asserts:
+      - failedTemplate:
+          errorPattern: Bundle spec is required

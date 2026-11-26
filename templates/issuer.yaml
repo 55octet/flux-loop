@@ -1,0 +1,21 @@
+{{- range $name, $issuer := .Values.issuers | default dict }}
+---
+apiVersion: {{ $issuer.apiVersion | default "cert-manager.io/v1" }}
+kind: Issuer
+metadata:
+  name: {{ $name }}
+  namespace: {{ required (printf "Issuer %s namespace is required" $name) $issuer.namespace }}
+{{- if $issuer.annotations }}
+  annotations:
+{{ $issuer.annotations | toYaml | indent 4 }}
+{{- end }}
+  labels:
+{{ include "flux-loop.labels" $ | indent 4 }}
+{{- if $issuer.labels }}
+{{ $issuer.labels | toYaml | indent 4 }}
+{{- end }}
+spec:
+{{- with (required "Issuer spec is required" $issuer.spec) }}
+{{ . | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

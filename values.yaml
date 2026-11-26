@@ -16,3 +16,7 @@ bundles: {}
 configMaps: []
 
 certificates: {}
+
+issuers: {}
+
+clusterIssuers: {}

@@ -1,0 +1,154 @@
+suite: Certificate
+templates:
+  - templates/certificate.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders the Certificate keyed by name with the spec passed through
+    set:
+      certificates:
+        example:
+          namespace: my-app
+          spec:
+            secretName: example-tls
+            dnsNames:
+              - example.com
+            issuerRef:
+              name: letsencrypt-prod
+              kind: ClusterIssuer
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Certificate
+      - isAPIVersion:
+          of: cert-manager.io/v1
+      - equal:
+          path: metadata.name
+          value: example
+      - equal:
+          path: metadata.namespace
+          value: my-app
+      - notExists:
+          path: metadata.annotations
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+      - equal:
+          path: spec
+          value:
+              secretName: example-tls
+              dnsNames:
+                - example.com
+              issuerRef:
+                name: letsencrypt-prod
+                kind: ClusterIssuer
+
+  - it: merges custom annotations and labels
+    set:
+      certificates:
+        example:
+          namespace: my-app
+          annotations:
+            owner: platform-team
+          labels:
+            env: test
+          spec:
+            secretName: example-tls
+            dnsNames:
+              - example.com
+            issuerRef:
+              name: letsencrypt-prod
+              kind: ClusterIssuer
+    asserts:
+      - equal:
+          path: metadata.annotations.owner
+          value: platform-team
+      - equal:
+          path: metadata.labels.env
+          value: test
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: test
+
+  - it: honours an apiVersion override
+    set:
+      certificates:
+        example:
+          apiVersion: example.io/v9
+          namespace: my-app
+          spec:
+            secretName: example-tls
+            dnsNames:
+              - example.com
+            issuerRef:
+              name: letsencrypt-prod
+              kind: ClusterIssuer
+    asserts:
+      - isAPIVersion:
+          of: example.io/v9
+
+  - it: renders entries in key order
+    set:
+      certificates:
+        zeta:
+          namespace: my-app
+          spec:
+            secretName: example-tls
+            dnsNames:
+              - example.com
+            issuerRef:
+              name: letsencrypt-prod
+              kind: ClusterIssuer
+        alpha:
+          namespace: my-app
+          spec:
+            secretName: example-tls
+            dnsNames:
+              - example.com
+            issuerRef:
+              name: letsencrypt-prod
+              kind: ClusterIssuer
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: alpha
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: zeta
+        documentIndex: 1
+
+  - it: fails when spec is missing
+    set:
+      certificates:
+        broken:
+          namespace: my-app
+    asserts:
+      - failedTemplate:
+          errorPattern: Certificate spec is required
+
+  - it: fails when namespace is missing
+    set:
+      certificates:
+        broken:
+          spec:
+            secretName: example-tls
+            dnsNames:
+              - example.com
+            issuerRef:
+              name: letsencrypt-prod
+              kind: ClusterIssuer
+    asserts:
+      - failedTemplate:
+          errorPattern: Certificate broken namespace is required

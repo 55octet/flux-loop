@@ -1,0 +1,63 @@
+suite: OCIRepository
+templates:
+  - templates/ocirepository.yaml
+release:
+  name: test
+chart:
+  version: 0.0.1
+  appVersion: 0.0.1
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders an OCIRepository with the spec passed through
+    set:
+      ociRepositories:
+        - name: cloudnative-pg
+          namespace: cnpg
+          annotations:
+            owner: platform-team
+          labels:
+            env: test
+          spec:
+            interval: 5m
+            url: oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
+            ref:
+              tag: 0.27.1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: OCIRepository
+      - isAPIVersion:
+          of: source.toolkit.fluxcd.io/v1
+      - equal:
+          path: metadata.name
+          value: cloudnative-pg
+      - equal:
+          path: metadata.namespace
+          value: cnpg
+      - equal:
+          path: metadata.annotations.owner
+          value: platform-team
+      - equal:
+          path: metadata.labels.env
+          value: test
+      - equal:
+          path: spec
+          value:
+            interval: 5m
+            url: oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
+            ref:
+              tag: 0.27.1
+
+  - it: fails when spec is missing
+    set:
+      ociRepositories:
+        - name: broken
+          namespace: cnpg
+    asserts:
+      - failedTemplate:
+          errorPattern: OCIRepository spec is required
